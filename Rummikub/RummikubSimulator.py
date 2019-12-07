@@ -1,5 +1,16 @@
 import random
 
+# TODO
+#   - Harvest tiles
+#   - More academic and/or Python conventions?
+#       - Remove globals
+#       - Make more functional style, e.g. returning board with new sets instead of 
+#         modifying existing board. Or, return sets to add/remove.
+#   - Find and rank multiple solutions
+#       - Order of play (runs vs. groups)
+#       - Combined with harvesting tiles
+#       - Getting rid of high numbered tiles first
+
 max_tile_number = 13
 colors = ["black", "blue", "red", "orange", "pink", "purple", "green", "gold", "silver", "white"]
 
@@ -34,6 +45,16 @@ def number_of_tile(tile):
     return tile.number
 
 
+def find_harvestable_tiles():
+    """Returns full list of harvestable tiles, though the caller should only harvest one at a time"""
+    harvestable_tiles = []
+    for tile_set in board:
+        if len(tile_set) > 3:
+            harvestable_tiles.append(tile_set[0])
+            harvestable_tiles.append(tile_set[len(tile_set) - 1])
+    return harvestable_tiles
+
+
 def find_run(tiles):
     """Returns the first run of at least 3 tiles."""
     tiles.sort()
@@ -54,7 +75,7 @@ def find_run(tiles):
                     if len(current_run) >= 3:
                         return current_run
 
-                    # TONY: Consolidate with below else?
+                    # TODO: Consolidate with below else?
                     current_run.clear()
                     current_run.append(tiles[i])
             else:
@@ -282,6 +303,25 @@ def create_initial_tiles(num_colors, duplicates_per_color, num_initial_tiles):
     return tiles
 
 
+def validate_board(num_colors, duplicates_per_color, num_initial_tiles):
+    """Ensure that all tiles are accounted for"""
+    all_tiles = create_initial_tiles(num_colors, duplicates_per_color, num_initial_tiles)
+    for tile in stacked_tiles:
+        all_tiles.remove(tile)
+
+    for tile_set in board:
+        for tile in tile_set:
+            all_tiles.remove(tile)
+
+    for player in players:
+        for tile in player.tiles:
+            all_tiles.remove(tile)
+
+    if len(all_tiles) > 0:
+        print_tiles("Extra tiles:", all_tiles)
+        assert(False)
+
+
 def init_game(num_players, num_colors, duplicates_per_color, num_initial_tiles):
     stacked_tiles.clear()
     stacked_tiles.extend(create_initial_tiles(num_colors, duplicates_per_color, num_initial_tiles))
@@ -328,7 +368,10 @@ def play_normal_game(num_players, num_colors, duplicates_per_color, num_initial_
                 break
             final_draw = final_draw - 1
 
+        validate_board(num_colors, duplicates_per_color, num_initial_tiles)
+
     print_stats()
+
 
 def meld_statistics(num_players, num_colors, num_initial_tiles):
     meld_turn_total = 0
@@ -348,3 +391,7 @@ def meld_statistics(num_players, num_colors, num_initial_tiles):
 
     average_meld_turn = float(meld_turn_total) / float(meld_turn_count)
     print(f"Average turns before meld: {average_meld_turn}")
+
+
+if __name__ == '__main__':
+    play_normal_game(num_players=4, num_colors=4, duplicates_per_color=2, num_initial_tiles=14)

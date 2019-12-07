@@ -1,9 +1,11 @@
 import re
+import unittest
 import RummikubSimulator as rs
 
 def parse_tile(tile_string):
     match = re.match(r"([)0-9]+)\[([a-z]+)\]", tile_string)
-    return rs.Tile(match.group(1), rs.colors.index(match.group(2)))
+    return rs.Tile(int(match.group(1)), rs.colors.index(match.group(2)))
+
 
 def parse_tiles(tiles_string):
     tiles = []
@@ -13,44 +15,53 @@ def parse_tiles(tiles_string):
     return tiles
 
 
+class TestFindingRuns(unittest.TestCase):
 
-#print(f"{tile.number} {tile.color}")
+    def test_find_minimal_run(self):
+        tiles = parse_tiles("1[blue] 2[blue] 3[blue]")
+        found_run = rs.find_run(tiles)
+        self.assertEquals(len(tiles), len(found_run))
+
+    def test_find_expanded_run(self):
+        tiles = parse_tiles("1[blue] 2[blue] 3[blue] 4[blue] 5[blue]")
+        found_run = rs.find_run(tiles)
+        self.assertEquals(len(tiles), len(found_run))
+
+    def test_no_run_too_few(self):
+        tiles = parse_tiles("1[blue] 2[blue]")
+        found_run = rs.find_run(tiles)
+        self.assertEquals(len(found_run), 0)
+
+    def test_no_run_present(self):
+        tiles = parse_tiles("1[blue] 2[blue] 4[blue]")
+        found_run = rs.find_run(tiles)
+        self.assertEquals(len(found_run), 0)
 
 
+class TestFindingGroups(unittest.TestCase):
 
-# board = [
-#     [ Tile(4, 0), Tile(5, 0), Tile(6, 0), Tile(7, 0), Tile(8, 0), Tile(9, 0)],
-# ]
-
-# tile = Tile(7, 0)
-
-# print_tile_sets("Before", board)
-# try_add_to_run_on_board(tile)
-# print_tile_sets("After", board)
+    def test_find_minimal_group(self):
+        tiles = parse_tiles("1[blue] 1[red] 1[green]")
+        found_group = rs.find_group(tiles)
+        self.assertEquals(len(tiles), len(found_group))
 
 
-# meld_statistics(num_players=4, num_colors=4, num_initial_tiles=14)
+class TestPlayerMelds(unittest.TestCase):
 
-# for tile in stacked_tiles:
-#     tile.print()
+    def test_minimal_run_meld(self):
+        # TODO: Refactor so board isn't global
+        rs.board.clear()
+        player = rs.Player("TestPlayer")
+        player.tiles = parse_tiles("9[blue] 10[blue] 11[blue]")
+        self.assertTrue(player.try_meld())
 
-#test_tiles = [ Tile(1, 0), Tile(1, 0), Tile(2, 0), Tile(4, 0), Tile(5, 0), Tile(6, 0), Tile(1, 0), Tile(6, 0), Tile(7, 0), Tile(8, 0) ]
+    def test_close_but_insufficient_run_meld(self):
+        # TODO: Refactor so board isn't global
+        rs.board.clear()
+        player = rs.Player("TestPlayer")
+        player.tiles = parse_tiles("8[blue] 9[blue] 10[blue]")
+        self.assertFalse(player.try_meld())
 
-# test_tiles = [ Tile(1, 0), Tile(2, 0), Tile(3, 0), Tile(3, 0), Tile(4, 0)  ]
 
-# test_tiles = [ Tile(5, 1), Tile(8, 1), Tile(9, 1), Tile(10, 1), Tile(11, 1), Tile(2, 2), Tile(4, 3) ]
-#[black] 4[black] 9[black] 10[black] 1[blue] 2[blue] 4[blue] 5[blue] 8[blue] 9[blue] 10[blue] 11[blue] 2[red] 4[red] 7[red] 7[red] 8[red] 12[red] 2[orange] 6[orange] 8[orange] 8[orange] 9[orange] 11[orange] 13[orange]
-
-# run = find_run(test_tiles)
-# print_tiles("run", run)
-
-# player = Player("Tony")
-# player.tiles = test_tiles
-# player.try_meld()
-
-# for player in players:
-#     player.print()
-#     player.try_meld()
-
-# print_tile_sets("Board after meld:", board)
-
+if __name__ == '__main__':
+    unittest.main()
