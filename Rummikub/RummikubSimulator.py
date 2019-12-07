@@ -17,8 +17,11 @@ colors = ["black", "blue", "red", "orange", "pink", "purple", "green", "gold", "
 stacked_tiles = []
 board = []
 players = []
+print_verbosity = 10
 
 def print_tiles(prefix, tiles):
+    if print_verbosity == 0:
+        return
     tiles.sort()
     print(prefix, end=" ")
     for tile in tiles:
@@ -27,6 +30,8 @@ def print_tiles(prefix, tiles):
 
 
 def print_tile_sets(prefix, tile_sets):
+    if print_verbosity == 0:
+        return
     print(prefix)
     for tile_set in tile_sets:
         print_tiles("    ", tile_set)
@@ -140,16 +145,19 @@ def try_add_to_run_on_board(tile):
                 if len(tile_set) >= 5:
                     for i in range(len(tile_set)):
                         if tile_set[i] == tile:
-                            if i >= 2 and i <= len(tile_set) - 2:
-                                print("Split begin for tile: ", end="")
-                                tile.print()
-                                print("")
+                            if i >= 2 and i <= len(tile_set) - 3:
+                                if print_verbosity > 5:
+                                    print("Splitting tile set for tile: ", end="")
+                                    tile.print()
+                                    print("")
+                                    print_tiles("  Original:", tile_set)
                                 board.remove(tile_set)
                                 tile_set.insert(i, tile)
                                 board.append(tile_set[:i + 1])
                                 board.append(tile_set[i + 1:])
-                                print_tiles("    left:", tile_set[:i + 1])
-                                print_tiles("    right :", tile_set[i + 1:])
+                                if print_verbosity > 5:
+                                    print_tiles("    left:", tile_set[:i + 1])
+                                    print_tiles("    right :", tile_set[i + 1:])
                                 return True
 
     return False
@@ -285,10 +293,11 @@ class Player:
                 played_tile = True
 
         if not played_tile:
-            print(f"{self.name} took a tile. {len(stacked_tiles)} remaining. tile = ", end="")
             self.take_tiles(1)
-            self.tiles[len(self.tiles) - 1].print()
-            print("")
+            if print_verbosity > 5:
+                print(f"{self.name} took a tile. {len(stacked_tiles)} remaining. tile = ", end="")
+                self.tiles[len(self.tiles) - 1].print()
+                print("")
         
         return played_tile
 
@@ -310,6 +319,7 @@ def validate_board(num_colors, duplicates_per_color, num_initial_tiles):
         all_tiles.remove(tile)
 
     for tile_set in board:
+        assert(len(tile_set) >= 3)
         for tile in tile_set:
             all_tiles.remove(tile)
 
@@ -323,17 +333,21 @@ def validate_board(num_colors, duplicates_per_color, num_initial_tiles):
 
 
 def init_game(num_players, num_colors, duplicates_per_color, num_initial_tiles):
+    board.clear()
     stacked_tiles.clear()
-    stacked_tiles.extend(create_initial_tiles(num_colors, duplicates_per_color, num_initial_tiles))
-    print(f"Total tiles: {len(stacked_tiles)}")
-
     players.clear()
+
+    stacked_tiles.extend(create_initial_tiles(num_colors, duplicates_per_color, num_initial_tiles))
+    if print_verbosity > 5:
+        print(f"Total tiles: {len(stacked_tiles)}")
+
     for p in range(num_players):
         player = Player(f"Player{p}")
         player.take_tiles(num_initial_tiles)
         players.append(player)
 
-    print(f"Stacked tiles: {len(stacked_tiles)}")
+    if print_verbosity > 5:
+        print(f"Stacked tiles: {len(stacked_tiles)}")
     
 
 def print_stats():
@@ -373,25 +387,5 @@ def play_normal_game(num_players, num_colors, duplicates_per_color, num_initial_
     print_stats()
 
 
-def meld_statistics(num_players, num_colors, num_initial_tiles):
-    meld_turn_total = 0
-    meld_turn_count = 0
-
-    for i in range(0, 30):
-        init_game(num_players, num_colors, num_initial_tiles)
-        players_to_meld = num_players
-
-        while players_to_meld > 0 and len(stacked_tiles) > 0:
-            for player in players:
-                player.play_turn()
-        
-        for player in players:
-            meld_turn_total = meld_turn_total + player.melded_turn
-            meld_turn_count = meld_turn_count + 1
-
-    average_meld_turn = float(meld_turn_total) / float(meld_turn_count)
-    print(f"Average turns before meld: {average_meld_turn}")
-
-
 if __name__ == '__main__':
-    play_normal_game(num_players=4, num_colors=4, duplicates_per_color=2, num_initial_tiles=14)
+    play_normal_game(num_players = 4, num_colors = 4, duplicates_per_color = 2, num_initial_tiles = 14)

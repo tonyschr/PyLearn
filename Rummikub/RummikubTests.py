@@ -43,7 +43,15 @@ class TestFindingGroups(unittest.TestCase):
     def test_find_minimal_group(self):
         tiles = parse_tiles("1[blue] 1[red] 1[green]")
         found_group = rs.find_group(tiles)
-        self.assertEquals(len(tiles), len(found_group))
+        self.assertEqual(len(tiles), len(found_group))
+
+
+class TestSplits(unittest.TestCase):
+
+    def test_split_at_end(self):
+        rs.board.clear()
+        rs.board.append(parse_tiles("8[orange] 9[orange] 10[orange] 11[orange] 12[orange] 13[orange]"))
+        rs.try_add_to_run_on_board(parse_tile("11[orange]"))
 
 
 class TestPlayerMelds(unittest.TestCase):
