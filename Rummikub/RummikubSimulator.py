@@ -64,8 +64,6 @@ def find_run(tiles):
     """Returns the first run of at least 3 tiles."""
     tiles.sort()
     current_run = []
-    num_found = 0
-    begin_run = -1
 
     for i in range(len(tiles)):
         if len(current_run) == 0:
