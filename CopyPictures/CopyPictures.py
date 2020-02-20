@@ -8,20 +8,26 @@ from PIL import Image, ExifTags
 # TODO
 #   - Unit tests
 #   - More error handling: can't create destination directory, file in use? Inspect for others
-#   - Actually copy the file. :)
 #   - Is the Exif date always in the format we expect?
 #   - Should we also look at other Exif fields?
+#   - Scope to certain file types? Could be an optional command line parameter
+#   - Remove default test values
 
 # Reverse lookup so we can use the friendly string name for the Exif tag
 TAGS_reverse = dict(((v, k) for k, v in ExifTags.TAGS.items()))
 
 def get_exif_creation_date(path):
-    img = Image.open(path)
-    img_exif = img.getexif()
-    if img_exif is not None:
-        date_time_string = img_exif.get(TAGS_reverse['DateTimeOriginal'])
-        if date_time_string:
-            return datetime.datetime.strptime(date_time_string, "%Y:%m:%d %H:%M:%S")
+    try:
+        img = Image.open(path)
+        img_exif = img.getexif()
+        if img_exif is not None:
+            date_time_string = img_exif.get(TAGS_reverse['DateTimeOriginal'])
+            if date_time_string:
+                return datetime.datetime.strptime(date_time_string, "%Y:%m:%d %H:%M:%S")
+    except Image.UnidentifiedImageError:
+        # It's OK if we can't get Exif information because the file type isn't a supported image.
+        # For now we copy anyway.
+        pass
     return ""
 
 def get_creation_date(path):
@@ -76,6 +82,8 @@ if __name__ == '__main__':
     destination_directory = r"D:\TestFiles\Destination"
     source_directory = r"D:\TestFiles\Source"
 
+    if args.sourcedir:
+        source_directory = args.sourcedir
     if args.destinationdir:
         destination_directory = args.destinationdir
 
