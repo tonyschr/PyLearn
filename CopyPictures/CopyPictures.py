@@ -2,6 +2,7 @@ import os
 import sys
 import datetime
 import argparse
+import shutil
 from PIL import Image, ExifTags
 
 # TODO
@@ -44,16 +45,19 @@ def get_new_path(path, destination_directory):
 def copy_picture(path, destination_directory):
     if os.path.exists(path):
         new_path = get_new_path(path, destination_directory)
-        print(f"{new_path}")
+        print(f"Copying {path} to {new_path}...")
+        shutil.copy2(path, new_path)
     else:
         print(f"ERROR - File not found: {path}")
 
-def copy_pictures_from_path(source_directory, destination_directory):
+def copy_pictures_from_path(source_directory, destination_directory, recursive):        
     file_list = os.listdir(source_directory)
     for filename in file_list:
         path = os.path.join(source_directory, filename)
         if os.path.isfile(path):
             copy_picture(path, destination_directory)
+        elif os.path.isdir(path) and recursive:
+            copy_pictures_from_path(path, destination_directory, recursive)
 
 def copy_pictures_from_text_list(text_list, destination_directory):
     with open(text_list) as text_list_file:
@@ -62,10 +66,11 @@ def copy_pictures_from_text_list(text_list, destination_directory):
             copy_picture(path, destination_directory)
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="Copies a set of pictures from either a folder or as specfied in a text file.")
     parser.add_argument('--sourcedir', help='Source directory of images')
     parser.add_argument('--sourcefile', help='Text file containing a list of images. Optional, and takes precedence over sourcedir')
     parser.add_argument('--destinationdir', help='Destination directory for images')
+    parser.add_argument('--recursive', action="store_true", help='When used with --sourcedir, recurses into subfolders')
     args = parser.parse_args()
 
     destination_directory = r"D:\TestFiles\Destination"
@@ -74,10 +79,19 @@ if __name__ == '__main__':
     if args.destinationdir:
         destination_directory = args.destinationdir
 
-    os.makedirs(destination_directory, exist_ok=True)
+    try:
+        os.makedirs(destination_directory, exist_ok=True)
+    except OSError as e:
+        print(f"ERROR - Unable to create destination directory: {destination_directory}")
+        exit()
 
     if args.sourcefile:
-        copy_pictures_from_text_list(args.sourcefile, destination_directory)
+        if os.path.exists(args.sourcefile):
+            copy_pictures_from_text_list(args.sourcefile, destination_directory)
+        else:
+            print(f"ERROR - Source text file does not exist: {args.sourcefile}")
     else:
-        copy_pictures_from_path(source_directory, destination_directory)
-
+        if os.path.exists(source_directory):
+            copy_pictures_from_path(source_directory, destination_directory, args.recursive)
+        else:
+            print(f"ERROR - Source directory does not exist: {source_directory}")
