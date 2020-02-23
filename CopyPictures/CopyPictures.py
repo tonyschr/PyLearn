@@ -5,30 +5,36 @@ import argparse
 import shutil
 from PIL import Image, ExifTags
 
-# TODO
-#   - Unit tests
-#   - More error handling: can't create destination directory, file in use? Inspect for others
-#   - Is the Exif date always in the format we expect?
-#   - Should we also look at other Exif fields?
-#   - Scope to certain file types? Could be an optional command line parameter
+# TODO:
+#   - Unit and/or functional tests
+#   - More error handling probably
 #   - Remove default test values
+#   - Should we also look for Exif fields other than DateTimeOriginal?
+#
+# Future Features:
+#   - Allow the user to specify a minimum rating when copying
+#   - Scope to certain file types to avoid copying RAW files, movies, etc. 
+#     Could be an optional command line parameter, with copying only JPG
+#     being the default
 
 # Reverse lookup so we can use the friendly string name for the Exif tag
-TAGS_reverse = dict(((v, k) for k, v in ExifTags.TAGS.items()))
+TAGS_reverse = dict(((value, key) for key, value in ExifTags.TAGS.items()))
 
 def get_exif_creation_date(path):
     try:
         img = Image.open(path)
         img_exif = img.getexif()
-        if img_exif is not None:
+        if img_exif:
             date_time_string = img_exif.get(TAGS_reverse['DateTimeOriginal'])
             if date_time_string:
+                # Right now we always expect this format. Need to understand whether there could
+                # be others.
                 return datetime.datetime.strptime(date_time_string, "%Y:%m:%d %H:%M:%S")
     except Image.UnidentifiedImageError:
         # It's OK if we can't get Exif information because the file type isn't a supported image.
         # For now we copy anyway.
         pass
-    return ""
+    return None
 
 def get_creation_date(path):
     creation_date = get_exif_creation_date(path)
