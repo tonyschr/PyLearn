@@ -40,7 +40,7 @@ def get_creation_date(path):
     creation_date = get_exif_creation_date(path)
     if not creation_date:
         # Exif data may not exist, so fallback on the OS creation time.
-        timestamp = os.path.getctime(path)
+        timestamp = os.path.getmtime(path)
         creation_date = datetime.datetime.fromtimestamp(timestamp)
     return creation_date
 
@@ -78,7 +78,7 @@ def copy_pictures_from_text_list(text_list, destination_directory):
             copy_picture(path, destination_directory)
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="Copies a set of pictures from either a folder or as specfied in a text file.")
+    parser = argparse.ArgumentParser(description="Copies a set of pictures from either a folder or as specified in a text file.")
     parser.add_argument('--sourcedir', help='Source directory of images')
     parser.add_argument('--sourcefile', help='Text file containing a list of images. Optional, and takes precedence over sourcedir')
     parser.add_argument('--destinationdir', help='Destination directory for images')
@@ -95,7 +95,7 @@ if __name__ == '__main__':
 
     try:
         os.makedirs(destination_directory, exist_ok=True)
-    except OSError as e:
+    except OSError:
         print(f"ERROR - Unable to create destination directory: {destination_directory}")
         exit()
 
